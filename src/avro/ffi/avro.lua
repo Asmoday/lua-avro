@@ -573,6 +573,15 @@ function avro_module.ffi.avro.Schema(json)
 end
 
 
+function Schema_class:release()
+
+   if self.iface ~= nil then
+      if self.iface.decref_iface ~= nil then
+         self.iface:decref_iface()
+      end
+      self.iface = nil
+   end
+end
 ------------------------------------------------------------------------
 -- Values
 
@@ -952,8 +961,15 @@ function Value_class:size()
       local rc = self.iface.get_bytes(self.iface, self.self, v_const_void_p, v_size)
       if rc ~= 0 then avro_error() end
       return ffi.string(v_const_void_p[0], v_size[0])
+   elseif value_type == RECORD then
+      if self.iface.get_size == nil then
+         error "no implementation for get_size"
+      end
+      local rc = self.iface.get_size(self.iface, self.self, v_size)
+      if rc ~= 0 then avro_error() end
+      return tonumber(v_size[0])
    else
-      error("Can only get size of array or map")
+      error("Can only get size of array or map or record")
    end
 end
 

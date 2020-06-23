@@ -75,6 +75,15 @@ function Schema:raw_schema()
    return self.raw
 end
 
+function Schema:release()
+   if self ~= nil then
+      local raw = self:raw_schema()
+      if raw ~= nil then
+         raw:release()
+      end
+   end
+end
+
 function Schema:new_raw_value(...)
    local raw = self:raw_schema()
    return raw:new_raw_value(...)
