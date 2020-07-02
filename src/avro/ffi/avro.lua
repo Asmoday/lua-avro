@@ -1156,12 +1156,17 @@ function Value_class:set_from_ast(ast)
          self:get():set_from_ast(nil)
 
       else
-         local k,v = next(ast)
-         if not k then
-            error "Union AST must have exactly one element"
+         if type(ast) ~= 'table' then
+            assert(self:set(1))
+            self:get():set_from_ast(ast)
+         else
+            local k,v = next(ast)
+            if not k then
+               error "Union AST must have exactly one element"
+            end
+            assert(self:set(k))
+            self:get():set_from_ast(v)
          end
-         assert(self:set(k))
-         self:get():set_from_ast(v)
       end
    end
 end
