@@ -1157,8 +1157,15 @@ function Value_class:set_from_ast(ast)
 
       else
          if type(ast) ~= 'table' then
-            assert(self:set(1))
-            self:get():set_from_ast(ast)
+            local branch_1 = self:get(1)
+            local branch_2 = self:get(2)
+            if branch_1:type() == NULL then
+               assert(self:set(2))
+               branch_2:set_from_ast(ast)
+            else
+               assert(self:set(1))
+               branch_1:set_from_ast(ast)
+            end
          else
             local k,v = next(ast)
             if not k then
