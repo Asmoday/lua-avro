@@ -183,6 +183,17 @@ struct avro_value_iface {
 
 ------------------------------------------------------------------------
 -- Forward declarations
+ffi.cdef[[
+typedef struct {
+  char *fpos;
+  void *base;
+  unsigned short handle;
+  short flags;
+  short unget;
+  unsigned long alloc;
+  unsigned short buffincrement;
+} FILE;
+]]
 
 ffi.cdef [[
 typedef struct LuaAvroResolvedReader {
@@ -197,10 +208,12 @@ typedef struct LuaAvroResolvedWriter {
 typedef struct avro_file_reader_t_  *avro_file_reader_t;
 typedef struct avro_file_writer_t_  *avro_file_writer_t;
 
+
 typedef struct LuaAvroDataInputFile {
     avro_file_reader_t  reader;
     avro_schema_t  wschema;
     avro_value_iface_t  *iface;
+
 } LuaAvroDataInputFile;
 
 typedef struct LuaAvroDataOutputFile {
@@ -291,6 +304,17 @@ avro_generic_value_new(avro_value_iface_t *iface, avro_value_t *dest);
 ffi.cdef [[
 int
 avro_file_reader(const char *path, avro_file_reader_t *reader);
+
+
+
+int 
+avro_file_reader_fp(FILE *fp, const char *path, int should_close,
+			avro_file_reader_t * reader);
+
+         
+FILE * fmemopen (void *buf, size_t size, const char *opentype);
+
+int fclose(FILE *fp);
 
 int
 avro_file_reader_close(avro_file_reader_t reader);
@@ -1212,6 +1236,62 @@ function Value_class:copy_from(src)
    if rc ~= 0 then avro_error() end
 end
 
+
+function Value_class:to_table()
+   local value_type = self:type()
+   if value_type == STRING then
+      return self:get()
+   elseif value_type == BYTES then
+      return self:get()
+   elseif value_type == INT then
+      return self:get()
+   elseif value_type == LONG then
+      return self:get()
+   elseif value_type == FLOAT then
+      return self:get()
+   elseif value_type == DOUBLE then
+      return self:get()
+   elseif value_type == BOOLEAN then
+      return self:get()
+   elseif value_type == NULL then
+      return self:get()
+   elseif value_type == RECORD then
+      local result = {}
+      local size = self:size()
+      for i = 1 , size do
+         local val = self:get(i):to_table()
+         if val ~= nil then
+            table.insert(result,val)
+         end
+      end
+      return result
+   elseif value_type == ENUM  then
+      error("Unsupported avro type ENUM")
+   elseif value_type == FIXED then
+      error("Unsupported avro type FIXED")
+   elseif value_type == MAP then
+      error("Unsupported avro type MAP")
+   elseif value_type == UNION then
+      if self:get(1) == nil then
+         return self:get(2):to_table()
+      else return self:get(1):to_table()
+      end
+   elseif value_type == LINK then
+      error("Unsupported avro type LINK")
+   elseif value_type == ARRAY then
+      local result = {}
+      local size = self:size()
+      for i = 1, size  do
+         local val = self:get(i):to_table()
+         if val ~= nil then
+            table.insert(result,val)
+         end
+      end
+      return result
+   else error("Unsupported avro type" .. tostring(value_type))
+   end
+end
+
 function Value_class:to_json()
    local rc = avro.avro_value_to_json(self, true, v_char_p)
    if rc ~= 0 then avro_error() end
@@ -1442,7 +1522,15 @@ avro_module.ffi.avro.LuaAvroDataOutputFile = LuaAvroDataOutputFile
 function avro_module.ffi.avro.open(path, mode, schema)
    mode = mode or "r"
 
-   if mode == "r" then
+   if mode == "m" then
+      local reader = ffi.new(avro_file_reader_t_ptr)
+      local value = ffi.cast("void*", path)
+      local file = ffi.C.fmemopen(value,#path, "r")
+      local rc = avro.avro_file_reader_fp(file, "Lua", 1, reader)
+      if rc ~= 0 then avro_error() end
+      return new_input_file(reader[0])
+
+   elseif mode == "r" then
       local reader = ffi.new(avro_file_reader_t_ptr)
       local rc = avro.avro_file_reader(path, reader)
       if rc ~= 0 then avro_error() end
@@ -1454,7 +1542,6 @@ function avro_module.ffi.avro.open(path, mode, schema)
       local rc = avro.avro_file_writer_create(path, schema, writer)
       if rc ~= 0 then avro_error() end
       return LuaAvroDataOutputFile(writer[0])
-
    else
       error("Invalid mode "..mode)
    end
