@@ -688,7 +688,7 @@ function Value_class:get(index)
       end
       local rc = self.iface.get_null(self.iface, self.self)
       if rc ~= 0 then avro_error() end
-      return nil
+      return box.NULL
    elseif value_type == STRING then
       local size = ffi.new(int64_t_ptr)
       if self.iface.get_string == nil then
@@ -1260,9 +1260,7 @@ function Value_class:to_table()
       local size = self:size()
       for i = 1 , size do
          local val = self:get(i):to_table()
-         if val ~= nil then
-            table.insert(result,val)
-         end
+         table.insert(result,val)
       end
       return result
    elseif value_type == ENUM  then
