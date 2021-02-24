@@ -1260,7 +1260,7 @@ function Value_class:to_table()
       local size = self:size()
       for i = 1 , size do
          local val = self:get(i):to_table()
-	 if type(val) ~= 'nil'
+	 if type(val) ~= 'nil' then
            table.insert(result,val)
          end
       end
