@@ -1260,7 +1260,9 @@ function Value_class:to_table()
       local size = self:size()
       for i = 1 , size do
          local val = self:get(i):to_table()
-         table.insert(result,val)
+	 if type(val) ~= 'nil'
+           table.insert(result,val)
+         end
       end
       return result
    elseif value_type == ENUM  then
@@ -1281,7 +1283,7 @@ function Value_class:to_table()
       local size = self:size()
       for i = 1, size  do
          local val = self:get(i):to_table()
-         if val ~= nil then
+         if type(val) ~= 'nil' then
             table.insert(result,val)
          end
       end
