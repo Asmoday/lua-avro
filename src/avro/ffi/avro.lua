@@ -1152,7 +1152,7 @@ function Value_class:set_from_ast(ast)
    or value_type == FLOAT
    or value_type == INT
    or value_type == LONG then
-      self:set(tonumber(ast))
+      self:set(ast)
 
    elseif value_type == ARRAY then
       self:reset()
