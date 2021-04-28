@@ -1272,10 +1272,7 @@ function Value_class:to_table()
    elseif value_type == MAP then
       error("Unsupported avro type MAP")
    elseif value_type == UNION then
-      if self:get(1) == nil then
-         return self:get(2):to_table()
-      else return self:get(1):to_table()
-      end
+      return self:get():to_table()
    elseif value_type == LINK then
       error("Unsupported avro type LINK")
    elseif value_type == ARRAY then
